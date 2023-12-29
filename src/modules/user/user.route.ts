@@ -5,6 +5,7 @@ import {
   userSchemaValidation,
 } from './user.validation';
 import { userController } from './user.controller';
+import auth from '../../app/config/middlewares/auth';
 const router = express.Router();
 
 router.post(
@@ -16,6 +17,12 @@ router.post(
   '/login',
   validateRequest(userLoginSchemaValidation),
   userController.loginUser,
+);
+router.post(
+  '/change-password',
+  auth('user', 'admin'),
+  //   validateRequest(userLoginSchemaValidation),
+  userController.changePassword,
 );
 // router.get('/', categoryControllers.getAllCategories);
 

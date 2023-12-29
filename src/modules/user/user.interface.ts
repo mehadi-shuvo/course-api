@@ -1,4 +1,4 @@
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 export type TUserRole = 'user' | 'admin';
 
@@ -12,6 +12,13 @@ export type TUser = {
 export type TLogin = {
   username: string;
   password: string;
+};
+
+export type TPasswords = {
+  userId: Types.ObjectId;
+  current: string;
+  previous: string;
+  prePrevious: string;
 };
 
 export interface UserModel extends Model<TUser> {

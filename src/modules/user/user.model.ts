@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { TUser, UserModel } from './user.interface';
+import { TPasswords, TUser, UserModel } from './user.interface';
 import bcrypt from 'bcrypt';
 import config from '../../app/config';
 
@@ -15,6 +15,13 @@ const userSchema = new Schema<TUser>(
   },
 );
 
+const passwordSchema = new Schema<TPasswords>({
+  userId: { type: Schema.Types.ObjectId, required: true },
+  current: { type: String, required: true },
+  previous: { type: String, default: '' },
+  prePrevious: { type: String, default: '' },
+});
+
 userSchema.pre('save', async function (next) {
   // eslint-disable-next-line @typescript-eslint/no-this-alias
   const user = this; // doc
@@ -29,10 +36,10 @@ userSchema.pre('save', async function (next) {
 });
 
 // set '' after saving password
-userSchema.post('save', function (doc, next) {
-  doc.password = '';
-  next();
-});
+// userSchema.post('save', function (doc, next) {
+//   doc.password = '';
+//   next();
+// });
 
 userSchema.statics.isPasswordMatched = async function (
   planePassword,
@@ -42,3 +49,5 @@ userSchema.statics.isPasswordMatched = async function (
 };
 
 export const User = model<TUser, UserModel>('User', userSchema);
+
+export const Password = model<TPasswords>('Passwords', passwordSchema);
