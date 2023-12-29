@@ -16,7 +16,7 @@ const createCourseIntoDB = async (
   if (!createdByInfo) {
     throw new AppError(httpStatus.UNAUTHORIZED, 'You are not Authorized ❌💀');
   }
-  console.log(createdByInfo);
+  // console.log(createdByInfo);
 
   payload.createdBy = createdByInfo?._id;
 
