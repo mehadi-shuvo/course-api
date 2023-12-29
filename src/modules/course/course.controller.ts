@@ -49,7 +49,11 @@ const getAllCourses = catchAsync(async (req, res) => {
 const updateCourse = catchAsync(async (req, res) => {
   const { courseId } = req.params;
 
-  const result = await courseServices.updateCourseInDB(courseId, req.body);
+  const result = await courseServices.updateCourseInDB(
+    courseId,
+    req.body,
+    req.user,
+  );
   sendResponse(res, {
     statusCode: 200,
     success: true,

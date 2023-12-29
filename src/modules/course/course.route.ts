@@ -20,6 +20,7 @@ router.get('/best', courseController.getBestCourseBasedOnReview);
 router.get('/', courseController.getAllCourses);
 router.put(
   '/:courseId',
+  auth('admin'),
   validateRequest(updateCourseValidationSchema),
   courseController.updateCourse,
 );

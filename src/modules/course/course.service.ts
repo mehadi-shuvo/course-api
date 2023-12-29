@@ -83,12 +83,19 @@ const getAllCoursesFromDB = async (query: Record<string, unknown>) => {
   }
 };
 
-const updateCourseInDB = async (id: string, payload: Partial<TCourse>) => {
+const updateCourseInDB = async (
+  id: string,
+  payload: Partial<TCourse>,
+  adminInfo: JwtPayload,
+) => {
   const { tags, details, ...remainingCourseData } = payload;
   const modifiedData: Record<string, unknown> = { ...remainingCourseData };
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
+    if (!adminInfo._id) {
+      throw new AppError(httpStatus.UNAUTHORIZED, 'YOU ARE NOT AUTHORIZED');
+    }
     if (details) {
       for (const [key, value] of Object.entries(details)) {
         modifiedData[`details.${key}`] = value;
@@ -125,7 +132,7 @@ const updateCourseInDB = async (id: string, payload: Partial<TCourse>) => {
       new: true,
       runValidators: true,
       session,
-    });
+    }).populate('createdBy', '-password');
     if (result) {
       result.tags = result.tags.filter((tag) => !tag.isDeleted);
     }
