@@ -5,11 +5,13 @@ import {
   updateCourseValidationSchema,
 } from './course.validation';
 import { courseController } from './course.controller';
+import auth from '../../app/config/middlewares/auth';
 
 const router = express.Router();
 
 router.post(
   '/',
+  auth('admin'),
   validateRequest(createCourseValidationSchema),
   courseController.createCourse,
 );

@@ -6,13 +6,26 @@ import { TCourse } from './course.interface';
 import { Course } from './course.model';
 import { getTheBestCourse } from './course.util';
 import mongoose from 'mongoose';
+import { JwtPayload } from 'jsonwebtoken';
 // import { startSession } from 'mongoose';
 
-const createCourseIntoDB = async (payload: TCourse) => {
+const createCourseIntoDB = async (
+  payload: TCourse,
+  createdByInfo: JwtPayload,
+) => {
+  if (!createdByInfo) {
+    throw new AppError(httpStatus.UNAUTHORIZED, 'You are not Authorized ❌💀');
+  }
+  console.log(createdByInfo);
+
+  payload.createdBy = createdByInfo?._id;
+
   const result = await Course.create(payload);
+
   if (!result) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Failed to Create Course 🤕');
   }
+
   return result;
 };
 
@@ -57,7 +70,7 @@ const getBestCourseBasedOnReviewFromDB = async () => {
 };
 const getAllCoursesFromDB = async (query: Record<string, unknown>) => {
   try {
-    const data = await Course.find();
+    const data = await Course.find().populate('createdBy', '-password');
     if (data) {
       data.map((objData: TCourse) => {
         objData.tags = objData.tags.filter((tag) => !tag.isDeleted);

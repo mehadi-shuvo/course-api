@@ -4,7 +4,7 @@ import { courseServices } from './course.service';
 import { sendResponse } from '../../app/util/sendResponse';
 
 const createCourse: RequestHandler = catchAsync(async (req, res) => {
-  const result = await courseServices.createCourseIntoDB(req.body);
+  const result = await courseServices.createCourseIntoDB(req.body, req.user);
 
   sendResponse(res, {
     statusCode: 200,
