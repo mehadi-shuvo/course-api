@@ -9,12 +9,15 @@ import handleZodError from '../app/errors/handleZodError';
 import handleValidationError from '../app/errors/handleValidationError';
 import handleCastError from '../app/errors/handleCastError';
 import handleDuplicateError from '../app/errors/handleDuplicateError';
+import JWTError from '../app/errors/JWTError';
 
 const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   //setting default values
   let statusCode = 500;
   let message = 'Error';
   let errorMessage = 'Something went wrong!';
+  let jwtErrorDetails;
+  let stack = config.node_env === 'development' ? err?.stack : null;
 
   if (err instanceof ZodError) {
     const simplifiedError = handleZodError(err);
@@ -40,6 +43,21 @@ const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
     statusCode = err?.statusCode;
     message = 'AppError';
     errorMessage = err.message;
+  } else if (err?.name === 'JsonWebTokenError') {
+    message = 'Unauthorized Access';
+    errorMessage =
+      'You do not have the necessary permissions to access this resource. (Invalid Token)';
+    stack = null;
+  } else if (err?.name === 'TokenExpiredError') {
+    message = 'Unauthorized Access';
+    errorMessage =
+      'You do not have the necessary permissions to access this resource. (TokenExpiredError)';
+    stack = null;
+  } else if (err instanceof JWTError) {
+    message = 'Unauthorized Access';
+    errorMessage =
+      'You do not have the necessary permissions to access this resource.';
+    stack = null;
   } else if (err instanceof Error) {
     message = 'Error';
     errorMessage = err?.message;
@@ -50,8 +68,10 @@ const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
     success: false,
     message,
     errorMessage,
-    errorDetails: err,
-    stack: config.node_env === 'development' ? err?.stack : null,
+    errorDetails:
+      // eslint-disable-next-line no-constant-condition
+      err?.name === 'TokenExpiredError' || 'JsonWebTokenError' ? null : err,
+    stack,
   });
 };
 

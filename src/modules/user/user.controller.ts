@@ -12,27 +12,41 @@ const createUser = catchAsync(async (req: Request, res: Response) => {
     message: 'user created successfully😀',
   });
 });
+
 const loginUser = catchAsync(async (req: Request, res: Response) => {
   const result = await userServices.loginUserService(req.body);
   sendResponse(res, {
     data: result,
     statusCode: 200,
     success: true,
-    message: 'user logged-in successfully😀',
+    message: 'logged in successfully😀',
   });
 });
+
 const changePassword = catchAsync(async (req: Request, res: Response) => {
   const passwordData = req.body;
   const result = await userServices.changePasswordService(
     req.user,
     passwordData,
   );
-  sendResponse(res, {
-    data: result,
-    statusCode: 200,
-    success: true,
-    message: 'password Changed successfully😀',
-  });
+
+  // console.log(data);
+
+  if (result) {
+    sendResponse(res, {
+      data: result,
+      statusCode: 200,
+      success: true,
+      message: 'user logged-in successfully😀',
+    });
+  } else {
+    sendResponse(res, {
+      data: null,
+      statusCode: 400,
+      success: false,
+      message: `Password change failed. Ensure the new password is unique and not among the last 2 used`,
+    });
+  }
 });
 
 export const userController = {

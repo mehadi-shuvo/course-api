@@ -61,64 +61,71 @@ const changePasswordService = async (
   userData: JwtPayload,
   payload: { currentPassword: string; newPassword: string },
 ) => {
-  const user = await User.findById(userData._id);
-  if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
-  }
-  if (
-    !(await User.isPasswordMatched(payload.currentPassword, user?.password))
-  ) {
-    throw new AppError(httpStatus.UNAUTHORIZED, 'wrong password!');
-  }
+  try {
+    const user = await User.findById(userData._id);
+    if (!user) {
+      throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
+    }
+    if (
+      !(await User.isPasswordMatched(payload.currentPassword, user?.password))
+    ) {
+      throw new AppError(httpStatus.UNAUTHORIZED, 'wrong password!');
+    }
 
-  const userPasswords = await Password.findOne({ userId: userData._id });
+    const userPasswords = await Password.findOne({ userId: userData._id });
 
-  if (!userPasswords) {
-    throw new AppError(httpStatus.NOT_FOUND, 'passwords are not found!');
-  }
+    if (!userPasswords) {
+      throw new AppError(httpStatus.NOT_FOUND, 'passwords are not found!');
+    }
 
-  if (
-    await User.isPasswordMatched(payload.newPassword, userPasswords.current)
-  ) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      'current password and new password is same',
+    if (
+      await User.isPasswordMatched(payload.newPassword, userPasswords.current)
+    ) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'current password and new password is same',
+      );
+    }
+    if (
+      await User.isPasswordMatched(payload.newPassword, userPasswords.previous)
+    ) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'previous password and new password is same',
+      );
+    }
+    if (
+      await User.isPasswordMatched(
+        payload.newPassword,
+        userPasswords.prePrevious,
+      )
+    ) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Pre-previous password and new password is same',
+      );
+    }
+
+    const prePrevious = userPasswords.previous;
+    const previous = user.password;
+    const current = await bcrypt.hash(
+      payload.newPassword,
+      Number(config.bcrypt_salt_rounds),
     );
-  }
-  if (
-    await User.isPasswordMatched(payload.newPassword, userPasswords.previous)
-  ) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      'previous password and new password is same',
-    );
-  }
-  if (
-    await User.isPasswordMatched(payload.newPassword, userPasswords.prePrevious)
-  ) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      'Pre-previous password and new password is same',
-    );
-  }
 
-  const prePrevious = userPasswords.previous;
-  const previous = user.password;
-  const current = await bcrypt.hash(
-    payload.newPassword,
-    Number(config.bcrypt_salt_rounds),
-  );
+    await Password.findByIdAndUpdate(userPasswords._id, {
+      current,
+      previous,
+      prePrevious,
+    });
 
-  await Password.findByIdAndUpdate(userPasswords._id, {
-    current,
-    previous,
-    prePrevious,
-  });
-
-  await User.findByIdAndUpdate(user._id, { password: current });
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { password, ...userWithoutPassword } = user.toObject();
-  return userWithoutPassword;
+    await User.findByIdAndUpdate(user._id, { password: current });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...userWithoutPassword } = user.toObject();
+    return userWithoutPassword;
+  } catch (err) {
+    return null;
+  }
 };
 
 export const userServices = {

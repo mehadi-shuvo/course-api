@@ -1,5 +1,3 @@
-
-
 import { CourseExcludeFields } from '../../modules/course/course.const';
 import { TCourse, TTags } from '../../modules/course/course.interface';
 import { Course } from '../../modules/course/course.model';

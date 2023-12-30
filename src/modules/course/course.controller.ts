@@ -54,6 +54,8 @@ const updateCourse = catchAsync(async (req, res) => {
     req.body,
     req.user,
   );
+  // console.log(result);
+
   sendResponse(res, {
     statusCode: 200,
     success: true,

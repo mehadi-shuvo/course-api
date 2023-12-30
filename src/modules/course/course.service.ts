@@ -7,6 +7,7 @@ import { Course } from './course.model';
 import { getTheBestCourse } from './course.util';
 import mongoose from 'mongoose';
 import { JwtPayload } from 'jsonwebtoken';
+import JWTError from '../../app/errors/JWTError';
 // import { startSession } from 'mongoose';
 
 const createCourseIntoDB = async (
@@ -33,11 +34,14 @@ const getCourseWithReviewFromDB = async (id: string) => {
   let data: Record<string, unknown> = {};
 
   try {
-    const course = await Course.findById(id);
+    const course = await Course.findById(id).populate('createdBy', '-password');
     if (course) {
       course.tags = course.tags.filter((tag) => !tag.isDeleted);
     }
-    const reviews = await Review.find({ courseId: id });
+    const reviews = await Review.find({ courseId: id }).populate(
+      'createdBy',
+      '-password',
+    );
     data = { course: course, reviews: reviews };
     return data;
   } catch (err) {
@@ -52,7 +56,10 @@ const getBestCourseBasedOnReviewFromDB = async () => {
   try {
     const { bestCourse, totalReview } = await getTheBestCourse();
 
-    const course = await Course.findById(bestCourse.courseId);
+    const course = await Course.findById(bestCourse.courseId).populate(
+      'createdBy',
+      '-password',
+    );
     if (course) {
       course.tags = course.tags.filter((tag) => !tag.isDeleted);
     }
@@ -93,8 +100,11 @@ const updateCourseInDB = async (
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
+    if (!(await Course.findById(id))) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Course not found');
+    }
     if (!adminInfo._id) {
-      throw new AppError(httpStatus.UNAUTHORIZED, 'YOU ARE NOT AUTHORIZED');
+      throw new JWTError(httpStatus.UNAUTHORIZED, 'YOU ARE NOT AUTHORIZED');
     }
     if (details) {
       for (const [key, value] of Object.entries(details)) {
@@ -138,6 +148,7 @@ const updateCourseInDB = async (
     }
     await session.commitTransaction();
     await session.endSession();
+    // console.log(result);
 
     return result;
   } catch (err) {
